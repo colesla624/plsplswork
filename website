@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dreamscape | Lucid Dream Runner</title>
+<meta name="description" content="Explore lucid dreaming through an interactive browser game and dreamy visuals." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌙</text></svg>">
+<style>
+  :root {
+    --bg: #0b1026;
+    --bg2: #101737;
+    --text: #e9ecff;
+    --muted: #b7bce6;
+    --accent: #8a5cff;
+    --accent2: #61e1ff;
+    --card: #151c41;
+    --border: #2b2f5c;
+  }
+  [data-theme="light"] {
+    --bg: #fafaff; --bg2: #ffffff; --text: #1a1c2e; --muted: #4b527a;
+    --accent: #6a42ff; --accent2: #0077ff; --card: #f2f4ff; --border: #dfe3ff;
+  }
+  html, body { margin: 0; height: 100%; background: linear-gradient(180deg, var(--bg2), var(--bg)); color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif; }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+  header { position: sticky; top: 0; backdrop-filter: blur(8px); background: color-mix(in oklab, var(--bg2) 85%, transparent); border-bottom: 1px solid var(--border); z-index: 10; }
+  .nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .brand .logo { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(80px at 50% 45%, #ffd46b, transparent 70%); box-shadow: 0 0 20px rgba(255,212,107,0.35); }
+  .nav a { padding: 10px 12px; border-radius: 8px; }
+  .nav a.active { background: var(--card); border: 1px solid var(--border); }
+  .nav-controls { display: flex; gap: 10px; align-items: center; }
+  .btn { background: linear-gradient(180deg, #2d3a7a, #202859); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+  [data-theme="light"] .btn { background: linear-gradient(180deg, #e9eaff, #d8dbff); color: #1a1c2e; }
+  main { padding-top: 10px; }
+  section { display: none; }
+  section.active { display: block; }
+  .hero {
+    border: 1px solid var(--border); border-radius: 16px; padding: 24px; background: radial-gradient(900px at 30% 20%, rgba(138,92,255,0.18), transparent 70%),
+               radial-gradient(600px at 70% 70%, rgba(255,212,107,0.12), transparent 60%); box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+  .card h3 { margin-top: 0; }
+  footer { margin-top: 30px; padding: 20px 0; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+  .small { font-size: 13px; color: var(--muted); }
+  /* Game styles */
+  canvas {
+    width: min(92vw, 720px); height: min(60vh, 420px); max-width: 720px; max-height: 420px;
+    background: radial-gradient(600px at 60% 40%, rgba(138,92,255,0.15), rgba(0,0,0,0) 60%),
+                radial-gradient(900px at 30% 80%, rgba(255,212,107,0.12), rgba(0,0,0,0) 70%);
+    border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 30px rgba(255,255,255,0.05);
+  }
+  .hud { display: flex; gap: 16px; align-items: center; justify-content: center; margin-bottom: 8px; font-weight: 600; font-size: 14px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+  .btns { display: flex; gap: 8px; }
+  .tips { margin-top: 10px; font-size: 12px; opacity: 0.85; text-align: center; }
+  .touch-controls { display: flex; flex-direction: column; align-items: center; margin-top: 12px; gap: 6px; }
+  .touch-controls .ctrl {
+    font-size: 20px; width: 50px; height: 50px; border-radius: 50%; border: none; background: #2d3a7a; color: var(--text); box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  }
+  .touch-controls div { display: flex; gap: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="container nav">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>Dreamscape</div>
+    </div>
+    <nav>
+      <a href="#" data-link="home" class="active">Home</a>
+      <a href="#" data-link="play">Play</a>
+      <a href="#" data-link="about">About</a>
+      <a href="#" data-link="contact">Contact</a>
+    </nav>
+    <div class="nav-controls">
+      <button id="themeBtn" class="btn" aria-label="Toggle theme">Toggle theme</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section id="home" class="active">
+    <div class="hero">
+      <h1>Welcome to Dreamscape</h1>
+      <p>Step into a lucid night. Explore, play, and drift through a cosmos of color and motion.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Lucid Dream Runner</h3>
+          <p>Collect glowing moons and dodge the pink glitches. Simple, soothing, and a little hypnotic.</p>
+          <p class="small">Use arrow keys, WASD, touch buttons, or swipe gestures on mobile.</p>
+          <p><a href="#" data-link="play">Start playing →</a></p>
+        </div>
+        <div class="card">
+          <h3>Why lucid dreaming?</h3>
+          <p>Lucid moments can feel like creative sparks—your mind recognizing itself in motion. This project is a playful nod to that awareness.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="play">
+    <div class="hud">
+      <div>Score: <span id="score">0</span></div>
+      <div>Lives: <span id="lives">3</span></div>
+      <div>Level: <span id="level">1</span></div>
+      <div class="btns">
+        <button id="startBtn" class="btn">Start</button>
+        <button id="pauseBtn" class="btn">Pause</button>
+        <button id="resetBtn" class="btn">Reset</button>
+      </div>
+    </div>
+    <canvas id="game" width="720" height="420" aria-label="Lucid Dream Runner game"></canvas>
+    <div class="tips">Move with Arrow Keys, WASD, buttons, or swipe. Collect moons, avoid glitches.</div>
+    <div class="touch-controls">
+      <button class="ctrl" id="up">▲</button>
+      <div>
+        <button class="ctrl" id="left">◀</button>
+        <button class="ctrl" id="down">▼</button>
+        <button class="ctrl" id="right">▶</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="card">
+      <h3>About this project</h3>
+      <p>This site is a small portal into lucid aesthetics—clean lines, soft glow, and a game that asks you to notice patterns while drifting. Think of it like a mindful midnight walk.</p>
+      <p class="small">Made to be light, fast, and easy to host anywhere.</p>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="card">
+      <h3>Contact</h3>
+      <p>Have ideas for new levels, visuals, or a soundtrack? Share what you want to build next.</p>
+      <form id="contactForm">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <input id="name" name="name" placeholder="Your name" required style="padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--bg2); color:var(--text);" />
+          <input id="email" name="email" placeholder="Your email" type="email" required style="padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--bg2); color:var(--text);" />
+        </div>
+        <textarea id="message" name="message" placeholder="Tell me your idea..." required rows="4" style="margin-top:10px; padding:10px; width:100%; border:1px solid var(--border); border-radius:8px; background:var(--bg2); color:var(--text);"></textarea>
+        <div style="margin-top:10px;">
+          <button type="submit" class="btn">Send</button>
+        </div>
+        <p id="formStatus" class="small" style="margin-top:8px;"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    © <span id="year"></span> Dreamscape. All night, all light.
+  </div>
+</footer>
+
+<script>
+  // Theme toggle
+  const themeBtn = document.getElementById("themeBtn");
+  const root = document.documentElement;
+  function setTheme(t){ root.setAttribute("data-theme", t); localStorage.setItem("theme", t); }
+  setTheme(localStorage.getItem("theme") || "dark");
+  themeBtn.addEventListener("click", () => setTheme(root.getAttribute("data-theme")==="dark" ? "light" : "dark"));
+
+  // Simple router
+  const links = document.querySelectorAll("nav a, [data-link]");
+  const sections = document.querySelectorAll("main section");
+  function show(id){
+    sections.forEach(s=>s.classList.toggle("active", s.id===id));
+    document.querySelectorAll("nav a").forEach(a=>a.classList.toggle("active", a.dataset.link===id));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  links.forEach(l=>l.addEventListener("click", e => { e.preventDefault(); show(l.dataset.link || "home"); }));
+
+  // Footer year
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  // Contact form (client-side only demo)
+  const form = document.getElementById("contactForm");
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    document.getElementById("formStatus").textContent = "Thanks! Your message was captured locally.";
+    form.reset();
+  });
+
+  // If user opens directly on play route via hash
+  if (location.hash === "#play") show("play");
+
+  // ===== Lucid Dream Runner game (touch + keyboard) =====
+  const canvas = document.getElementById("game");
+  const c = canvas.getContext("2d");
+  const scoreEl = document.getElementById("score");
+  const livesEl = document.getElementById("lives");
+  const levelEl = document.getElementById("level");
+  const startBtn = document.getElementById("startBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const W = canvas.width, H = canvas.height;
+  let running = false, paused = false, last = 0;
+  let score = 0, lives = 3, level = 1, t = 0;
+  const keys = { up:false, down:false, left:false, right:false };
+
+  const player = { x: W*0.15, y: H*0.5, r: 14, vx:0, vy:0, speed:220, drag:0.88 };
+  const moons = [], glitches = [], stars = [];
+
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const rnd = (min,max)=>min+Math.random()*(max-min);
+
+  function spawnStar(){ stars.push({x:rnd(0,W),y:rnd(0,H),r:rnd(0.5,1.8),tw:rnd(0.002,0.005),phase:rnd(0,Math.PI*2)}); }
+  for(let i=0;i<160;i++) spawnStar();
+
+  function spawnMoon(){ moons.push({x:rnd(W*0.35,W*0.95),y:rnd(20,H-20),r:rnd(8,12),vx:rnd(-10,10),vy:rnd(-10,10)}); }
+  function spawnGlitch(){ const s=rnd(12,20); glitches.push({x:rnd(W*0.4,W*0.95),y:rnd(20,H-20),w:s,h:s,vx:rnd(-40,-10)-level*6,vy:rnd(-25,25),spin:rnd(-0.05,0.05),a:rnd(0,Math.PI*2)}); }
+
+  // Keyboard input
+  window.addEventListener("keydown",e=>{
+    const k=e.key.toLowerCase();
+    if(k==="arrowup"||k==="w") keys.up=true;
+    if(k==="arrowdown"||k==="s") keys.down=true;
+    if(k==="arrowleft"||k==="a") keys.left=true;
+    if(k==="arrowright"||k==="d") keys.right=true;
+    if(k==="p") paused=!paused;
+  });
+  window.addEventListener("keyup",e=>{
+    const k=e.key.toLowerCase();
+    if(k==="arrowup"||k==="w") keys.up=false;
+    if(k==="arrowdown"||k==="s") keys.down=false;
+    if(k==="arrowleft"||k==="a") keys.left=false;
+    if(k==="arrowright"||k==="d") keys.right=false;
+  });
+
+  // Touch buttons (continuous press)
+  ["up","down","left","right"].forEach(id=>{
+    const btn=document.getElementById(id);
+    const set=(v)=>{ keys[id]=v; };
+    btn.addEventListener("touchstart", (e)=>{ e.preventDefault(); set(true); }, {passive:false});
+    btn.addEventListener("touchend", ()=>set(false));
+    btn.addEventListener("touchcancel", ()=>set(false));
+    // Also support mouse for convenience
+    btn.addEventListener("mousedown", ()=>set(true));
+    btn.addEventListener("mouseup", ()=>set(false));
+    btn.addEventListener("mouseleave", ()=>set(false));
+  });
+
+  // Swipe gestures on canvas (short nudge)
+  let sx=0,sy=0;
+  canvas.addEventListener("touchstart",e=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true});
+  canvas.addEventListener("touchend",e=>{
+    const t=e.changedTouches[0]; const dx=t.clientX-sx, dy=t.clientY-sy;
+    const ax=Math.abs(dx), ay=Math.abs(dy);
+    keys.up=keys.down=keys.left=keys.right=false;
+    if(ax>ay){ if(dx>30) keys.right=true; else if(dx<-30) keys.left=true; }
+    else { if(dy>30) keys.down=true; else if(dy<-30) keys.up=true; }
+    setTimeout(()=>{ keys.up=keys.down=keys.left=keys.right=false; }, 200);
+  });
+
+  // Buttons
+  startBtn.onclick=()=>{ if(!running) startGame(); paused=false; running=true; };
+  pauseBtn.onclick=()=>paused=!paused;
+  resetBtn.onclick=()=>resetGame();
+
+  function startGame(){
+    score=0; lives=3; level=1; moons.length=0; glitches.length=0;
+    for(let i=0;i<6;i++) spawnMoon();
+    for(let i=0;i<4;i++) spawnGlitch();
+    updateHUD();
+  }
+  function resetGame(){
+    running=false; paused=false; player.x=W*0.15; player.y=H*0.5; player.vx=0; player.vy=0;
+    score=0; lives=3; level=1; moons.length=0; glitches.length=0; updateHUD();
+  }
+  function updateHUD(){ scoreEl.textContent=Math.floor(score); livesEl.textContent=lives; levelEl.textContent=level; }
+
+  function circleRectCollide(cx, cy, r, rx, ry, rw, rh) {
+    const nx = clamp(cx, rx, rx + rw), ny = clamp(cy, ry, ry + rh);
+    const dx = cx - nx, dy = cy - ny; return (dx*dx + dy*dy) <= r*r;
+  }
+  function circleCircleCollide(ax, ay, ar, bx, by, br) {
+    const dx = ax - bx, dy = ay - by; return (dx*dx + dy*dy) <= (ar + br) * (ar + br);
+  }
+
+  function loop(ts){
+    const dt = Math.min(0.033, (ts - last) / 1000 || 0.016); last = ts; t += dt;
+    c.clearRect(0,0,W,H); drawGradientSky(); drawStars();
+
+    if(running && !paused){
+      updatePlayer(dt); updateMoons(dt); updateGlitches(dt); maybeLevelUp(); updateHUD();
+    }
+
+    drawMoons(); drawGlitches(); drawPlayer(); drawUI();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  function drawGradientSky(){
+    const g = c.createRadialGradient(W*0.5, H*0.4, 20, W*0.5, H*0.4, Math.max(W,H));
+    g.addColorStop(0, "rgba(138,92,255,0.20)");
+    g.addColorStop(0.5, "rgba(27,34,80,0.4)");
+    g.addColorStop(1, "rgba(11,16,38,1)");
+    c.fillStyle = g; c.fillRect(0,0,W,H);
+  }
+  function drawStars(){
+    for(const s of stars){
+      const tw = (Math.sin(t * 3 + s.phase) * 0.5 + 0.5) * s.tw + 0.002;
+      c.beginPath(); c.arc(s.x, s.y, s.r * (1 + tw * 10), 0, Math.PI*2);
+      c.fillStyle = "rgba(233,236,255,0.8)"; c.fill();
+    }
+  }
+  function drawPlayer(){
+    c.beginPath(); c.arc(player.x, player.y, player.r + 16, 0, Math.PI*2);
+    c.fillStyle = "rgba(97,225,255,0.12)"; c.fill();
+    c.beginPath(); c.arc(player.x, player.y, player.r, 0, Math.PI*2);
+    const grad = c.createRadialGradient(player.x, player.y, 4, player.x, player.y, player.r);
+    grad.addColorStop(0, "#bdf4ff"); grad.addColorStop(1, "#61e1ff"); c.fillStyle = grad; c.fill();
+    c.strokeStyle = "rgba(97,225,255,0.35)"; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(player.x - player.r, player.y);
+    c.quadraticCurveTo(player.x - player.r - 20, player.y + Math.sin(t*6)*8, player.x - player.r - 60, player.y + Math.cos(t*4)*6);
+    c.stroke();
+  }
+  function drawMoons(){
+    for(const m of moons){
+      const glow = c.createRadialGradient(m.x, m.y, 2, m.x, m.y, m.r + 22);
+      glow.addColorStop(0, "rgba(255,212,107,0.35)"); glow.addColorStop(1, "rgba(255,212,107,0)");
+      c.fillStyle = glow; c.beginPath(); c.arc(m.x, m.y, m.r+18, 0, Math.PI*2); c.fill();
+      const grad = c.createRadialGradient(m.x - 3, m.y - 3, 2, m.x, m.y, m.r);
+      grad.addColorStop(0, "#fff4d6"); grad.addColorStop(1, "#ffd46b"); c.fillStyle = grad;
+      c.beginPath(); c.arc(m.x, m.y, m.r, 0, Math.PI*2); c.fill();
+      c.strokeStyle = "rgba(140,110,55,0.25)"; c.lineWidth = 1; c.beginPath();
+      c.arc(m.x + 3, m.y + 2, m.r * 0.5, 0.2, 2.6); c.stroke();
+    }
+  }
+  function drawGlitches(){
+    for(const gch of glitches){
+      c.save(); c.translate(gch.x + gch.w/2, gch.y + gch.h/2); c.rotate(gch.a);
+      c.fillStyle = "rgba(255,92,138,0.85)"; c.strokeStyle = "rgba(255,255,255,0.2)"; c.lineWidth = 2;
+      c.beginPath(); c.rect(-gch.w/2, -gch.h/2, gch.w, gch.h); c.fill(); c.stroke();
+      c.globalAlpha = 0.25; c.beginPath(); c.rect(-gch.w/2, -gch.h/2, gch.w, 2); c.fill();
+      c.beginPath(); c.rect(-gch.w/2, gch.h/2 - 2, gch.w, 2); c.fill(); c.restore();
+    }
+  }
+  function drawUI(){
+    if(!running){
+      c.fillStyle = "rgba(233,236,255,0.9)"; c.font = "600 24px system-ui"; c.textAlign = "center";
+      c.fillText("Lucid Dream Runner", W/2, H/2 - 20);
+      c.font = "400 14px system-ui";
+      c.fillText("Press Start. Move with Arrow Keys / WASD / touch / swipe.", W/2, H/2 + 10);
+    } else if(paused){
+      c.fillStyle = "rgba(233,236,255,0.9)"; c.font = "700 22px system-ui"; c.textAlign = "center";
+      c.fillText("Paused", W/2, H/2);
+    } else if(lives <= 0){
+      c.fillStyle = "rgba(233,236,255,0.95)"; c.font = "700 22px system-ui"; c.textAlign = "center";
+      c.fillText("You woke up!", W/2, H/2 - 10);
+      c.font = "400 14px system-ui"; c.fillText("Press Reset to try again.", W/2, H/2 + 16);
+    }
+  }
+  function updatePlayer(dt){
+    const accel = player.speed;
+    if(keys.up) player.vy -= accel * dt;
+    if(keys.down) player.vy += accel * dt;
+    if(keys.left) player.vx -= accel * dt;
+    if(keys.right) player.vx += accel * dt;
+    player.vx *= player.drag; player.vy *= player.drag;
+    player.x += player.vx * dt; player.y += player.vy * dt;
+    player.x = clamp(player.x, player.r + 2, W - player.r - 2);
+    player.y = clamp(player.y, player.r + 2, H - player.r - 2);
+    for(let i=moons.length-1;i>=0;i--){
+      const m=moons[i];
+      if(circleCircleCollide(player.x, player.y, player.r, m.x, m.y, m.r)){
+        score += 25; moons.splice(i,1); spawnMoon();
+        if(score % 75 === 0 && lives < 3) lives += 1;
+      }
+    }
+    for(let i=glitches.length-1;i>=0;i--){
+      const g=glitches[i];
+      if(circleRectCollide(player.x, player.y, player.r, g.x, g.y, g.w, g.h)){
+        lives -= 1; glitches.splice(i,1); spawnGlitch();
+      }
+    }
+  }
+  function updateMoons(dt){
+    for(const m of moons){
+      m.x += m.vx * dt; m.y += m.vy * dt;
+      if(m.x < 20 || m.x > W - 20) m.vx *= -1;
+      if(m.y < 20 || m.y > H - 20) m.vy *= -1;
+    }
+  }
+  function updateGlitches(dt){
+    for(const g of glitches){
+      g.x += g.vx * dt; g.y += g.vy * dt; g.a += g.spin;
+      if(g.y < 10 || g.y > H - 10) g.vy *= -1;
+      if(g.x < -30){
+        g.x = W + rnd(0, 30); g.y = rnd(20, H - 20);
+        g.vx = rnd(-40, -10) - level * 6; g.vy = rnd(-25, 25);
+      }
+    }
+  }
+  function maybeLevelUp(){
+    const nextLevelScore = level * 200;
+    if(score >= nextLevelScore){
+      level += 1;
+      for(let i=0;i<2;i++) spawnGlitch();
+      if(level % 2 === 0) spawnMoon();
+    }
+  }
+</script>
+</body>
+</html>
