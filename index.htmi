@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Website | Home</title>
+<style>
+  :root {
+    --bg: #0b1026;
+    --text: #e9ecff;
+    --accent: #61e1ff;
+    --card: #151c41;
+    --border: #2b2f5c;
+  }
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: linear-gradient(180deg, var(--bg), #1b2250);
+    color: var(--text);
+  }
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header h1 { margin: 0; font-size: 1.5rem; }
+  nav a {
+    color: var(--accent);
+    margin-left: 16px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  nav a:hover { text-decoration: underline; }
+  .hero {
+    text-align: center;
+    padding: 60px 20px;
+    background: radial-gradient(800px at 50% 20%, rgba(97,225,255,0.15), transparent 70%);
+  }
+  .hero h2 {
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+  }
+  .hero p {
+    max-width: 600px;
+    margin: 0 auto 20px;
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+  .btn {
+    background: var(--accent);
+    color: #0b1026;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 40px 20px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  footer {
+    text-align: center;
+    padding: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+    color: #b7bce6;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>My Website</h1>
+  <nav>
+    <a href="#">Home</a>
+    <a href="#">Play</a>
+    <a href="#">About</a>
+    <a href="#">Contact</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <h2>Welcome to My Website</h2>
+  <p>Step into a creative space where ideas come alive. Explore projects, play interactive games, and discover new inspirations.</p>
+  <button class="btn">Get Started</button>
+</section>
+
+<section class="features">
+  <div class="card">
+    <h3>Interactive Game</h3>
+    <p>Play the Lucid Dream Runner and experience a surreal journey through dreamscapes.</p>
+  </div>
+  <div class="card">
+    <h3>About Me</h3>
+    <p>Learn more about the vision behind this site and the creative projects I’m building.</p>
+  </div>
+  <div class="card">
+    <h3>Contact</h3>
+    <p>Have ideas or feedback? Reach out and let’s collaborate on something amazing.</p>
+  </div>
+</section>
+
+<footer>
+  © <span id="year"></span> My Website. All rights reserved.
+</footer>
+
+<script>
+  document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
